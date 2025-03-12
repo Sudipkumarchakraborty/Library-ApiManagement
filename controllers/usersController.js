@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-exports.createUser = async (req, res) => {
+exports.createUsers = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
         if (!name || !email || !password) {
@@ -13,6 +13,26 @@ exports.createUser = async (req, res) => {
         res.status(201).json({ message: "User registered successfully", user: result.rows[0] });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+exports.updateUsers = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, email, password, role } = req.body; 
+
+        const result = await pool.query(
+            'UPDATE Users SET name = $1, email = $2, password = $3, role = $4 WHERE id = $5 RETURNING *',
+            [name, email, password, role, id] 
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User updated successfully', updatedUser: result.rows[0] });
+    } catch (error) {
+        res.status(500).json({ error: error.message }); 
     }
 };
 

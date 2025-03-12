@@ -33,21 +33,25 @@ exports.borrowBook = async (req, res) => {
 exports.returnBook = async (req, res) => {
     try {
         const { id } = req.params;
-
-        // Check if the record exists
         const borrowCheck = await pool.query('SELECT * FROM Borrowed_Books WHERE id = $1 AND status = $2', [id, 'Borrowed']);
         if (borrowCheck.rowCount === 0) {
             return res.status(404).json({ message: 'Borrow record not found or already returned' });
         }
 
-        // Update status to 'Returned'
-        const result = await pool.query('UPDATE Borrowed_Books SET status = $1 WHERE id = $2 RETURNING *', ['Returned', id]);
+        const bookId = borrowCheck.rows[0].book_id; // Get book_id from the borrow record
 
-        // Increase available copies of the book
-        await pool.query('UPDATE Books SET copies_available = copies_available + 1 WHERE id = $1', [borrowCheck.rows[0].book_id]);
+        // Update the borrow status to "Returned"
+        const result = await pool.query(
+            'UPDATE Borrowed_Books SET status = $1 WHERE id = $2 RETURNING *',
+            ['Returned', id]
+        );
+
+        // Increase the available copies of the book
+        await pool.query('UPDATE Books SET copies_available = copies_available + 1 WHERE id = $1', [bookId]);
 
         res.json({ message: 'Book returned successfully', updatedBorrow: result.rows[0] });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error(error); // Log for debugging
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };

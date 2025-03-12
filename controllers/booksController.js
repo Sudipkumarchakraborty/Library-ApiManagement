@@ -12,13 +12,49 @@ exports.createBook = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
+exports.updateBooks = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, author, isbn, published_year, category, copies_available } = req.body;
+        const result = await pool.query(
+            'UPDATE Books SET title = $1, author = $2, isbn = $3, published_year = $4, category = $5, copies_available = $6 WHERE id = $7 RETURNING *',
+            [title, author, isbn, published_year, category, copies_available, id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Book not found' });
+        }
+        res.json({ message: 'Book updated successfully', updatedBook: result.rows[0] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 exports.getBooks = async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM Books');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+exports.getBooksById = async (req, res) => {
+    try {
+        const { id } = req.params; 
+
+        if (id) {
+            
+            const result = await pool.query('SELECT * FROM Books WHERE id = $1', [id]);
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ error: 'Book not found' });
+            }
+
+            return res.json(result.rows[0]); 
+        }
+        const result = await pool.query('SELECT * FROM Books');
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching books:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
