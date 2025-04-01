@@ -30,7 +30,7 @@ exports.updateBooks = async (req, res) => {
 };
 exports.getBooks = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM Books');
+        const result = await pool.query('SELECT * FROM Books ORDER BY id ASC');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -50,7 +50,7 @@ exports.getBooksById = async (req, res) => {
 
             return res.json(result.rows[0]); 
         }
-        const result = await pool.query('SELECT * FROM Books');
+        const result = await pool.query('SELECT * FROM Books ORDER BY id ASC');
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching books:', error);
